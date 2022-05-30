@@ -4,3 +4,8 @@
 *.ptx
 *.cubin
 *.fatbin
+libtorch/
+cudnn*
+build/
+.vscode/
+__pycache__/

@@ -27,17 +27,17 @@ __global__ void convolution_1D_basic_kernel(scalar_t *N, scalar_t *M, scalar_t *
             if (mask_pos < 0 || mask_pos >= width)
                 sum += padding_value;
             else
-                sum += M[j] * N[mask_pos];
+                sum += M[j] * N[mask_pos - i + idx];
         }
-        P[i] = sum;
+        P[idx] = sum;
     }
 }
 
 torch::Tensor gc_cuda_forward(torch::Tensor input, torch::Tensor mask)
 {
     auto output = torch::zeros_like(input);
-    auto mask_width = mask.size(0);
-    auto width = input.size(0);
+    auto mask_width = mask.size(2);
+    auto width = input.size(2);
     const auto batch_size = input.size(0);
     const auto state_size = input.size(2);
     const int threads = 1024;

@@ -1,18 +1,27 @@
+from torch.nn.parameter import Parameter
 import torch
 import torch.nn as nn
-from torch.utils.cpp_extension import load
+import torch.utils.benchmark as benchmark
 from mod import GC
 
 torch.random.manual_seed(42)
 
+kernel_size=3
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-cov = nn.Conv1d(1, 1, 3, padding=0, device=device)
-cov_cus = GC(3, cov.weight, device=device)
+cov = nn.Conv1d(1, 1, kernel_size, padding=1, device=device, bias=False)
+cov_cus = GC(kernel_size, cov.weight, device=device,)
 
-t_in = torch.randn(5, 1, 10, device=device)
+t_in = torch.randn(256, 1, 512, device=device)
 t_out = cov(t_in)
 t_out2 = cov_cus(t_in)
 
-print(t_out, t_out2)
+assert t_out.allclose(t_out2,atol=1e-07)
 
+t0 = benchmark.Timer(stmt="cov(t_in)", globals={"t_in": t_in, "cov": cov})
+
+t1 = benchmark.Timer(stmt="cov_cus(t_in)", globals={"t_in": t_in, "cov_cus": cov_cus})
+
+print(t0.timeit(100))
+print(t1.timeit(100))

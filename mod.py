@@ -1,4 +1,4 @@
-from inspect import Parameter
+from torch.nn.parameter import Parameter
 from typing import Any
 import torch
 import torch.nn as nn
@@ -6,7 +6,11 @@ from torch.nn import init
 import math
 from torch.utils.cpp_extension import load
 
-cov1d_cpp = load(name="cov1d_cpp", sources=["source/gc.cpp"])
+cov1d_cpp = load(
+    name="cov1d_cpp",
+    sources=["source/gc.cpp", "source/naive_gc.cu"],
+    extra_cuda_cflags=["-allow-unsupported-compiler"],
+)
 
 
 class GCFunction(torch.autograd.Function):
@@ -17,7 +21,7 @@ class GCFunction(torch.autograd.Function):
         return output
 
 
-class GC(torch.nn.modules):
+class GC(torch.nn.Module):
     def __init__(self, kernal_size, weight=None, device=None, dtype=None) -> None:
         super().__init__()
         factory_kwargs = {"device": device, "dtype": dtype}
